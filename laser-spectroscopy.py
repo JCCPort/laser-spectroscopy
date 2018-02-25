@@ -158,11 +158,14 @@ class DataRead:
         self.yranges = {}
         self.datpath = 'ReadableData'
         self.rangepath = 'Ranges'
+        self.rangename = pd.read_csv('{}.csv'.format(self.datafilename))
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.datpath))
         self.datafilename = '{}_{}_{}_{}'.format(self.exp, self.peak, self.run, self.end)
         self.dataset = self.datafilename.split('.')[0]
-        self.dataset = pd.read_csv('{}.csv'.format(self.datafilename), header=None, delimiter=',',
-                                 names=[self.IndependentVariable, self.DependentVariable], float_precision='round_trip', engine='c')
+        self.dataset = pd.read_csv('{}.csv'.format(self.datafilename),
+                                   header=None, delimiter=',',
+                                   names=[self.IndependentVariable, self.DependentVariable],
+                                   float_precision='round_trip', engine='c')
         print(self.dataset)
         self.dataset['Frequency (a.u)'] = self.dataset['Frequency (a.u)'].apply(lambda x: (x*((380/0.002610666056666669))))
         print(self.dataset)
@@ -180,7 +183,6 @@ class DataRead:
         start_time = time.time()
 
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.rangepath))
-        self.rangename = pd.read_csv('{}.csv'.format(self.datafilename))
         self.range()
         A = []
         B = []
@@ -212,7 +214,9 @@ class DataRead:
                 5: "$F=2 \Rightarrow F'=1$"}
 
         dictdict = {1: b_87, 2: b_85, 3: a_85, 4: a_87}
-        self.fitvals = pd.DataFrame(columns=['Peak', 'Hyperfine transition', 'Relative frequency (MHz)', 'FWHM (MHz)', 'Fraction'])
+        self.fitvals = pd.DataFrame(columns=['Peak', 'Hyperfine transition',
+                                             'Relative frequency (MHz)', 'FWHM (MHz)',
+                                             'Fraction'])
         for i in range(0, len(self.xrange)):
             A.append(self.xranges[i][np.where(self.yranges[i] == np.min(self.yranges[i]))[0]][0])
             B.append(A[i]-A[i-1])
@@ -274,10 +278,9 @@ class DataRead:
             row_fields = ('Hyperfine transition', 'Frequency (MHz)', 'FWHM (MHz)',
                           'Fraction')
             texfile.write('\\ {} & {} & {} & {} \\\\ \n'.format(row_fields[0], row_fields[1],
-                                                                      row_fields[2], row_fields[3]))
+                                                                row_fields[2], row_fields[3]))
             texfile.write('\hline \hline')
             for i in range(0, len(self.fitvals['Peak'])):
-
                 texfile.write('\\ {} & ${:2L}$ & ${:5L}$ & ${:1L}$ \\\\ \n'.format(
                                                                                       self.fitvals['Hyperfine transition'][i],
                                                                                       self.fitvals['Relative frequency (MHz)'][i],
@@ -289,7 +292,7 @@ class DataRead:
             texfile.write('\\end{document}\n')
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
 
-    def multiplot(self):
+    def multi_plot(self):
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.rangepath))
         self.rangename = pd.read_csv('{}.csv'.format(self.datafilename), engine='c')
         self.range()
@@ -300,7 +303,6 @@ class DataRead:
             params += voigt_mod.guess(self.yranges[i], x=self.xranges[i], center=np.median(self.xranges[i]),
                                       sigma=np.std(self.xranges[i]), height=np.max(self.yranges[i]), fraction=0.7)
             model = voigt_mod + line_mod
-            # params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
 
             fig = plt.figure()
@@ -368,10 +370,7 @@ def DataConvert(datafolder, destinationfolder):
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
 
 
-# print(DataRead(1, 1).dataset)
-
-
-def doot(exp, peak, run, end):
+def plot_outputter(exp, peak, run, end):
     peakdict = {1: '87b', 2: '85b', 3: '85a', 4: '87a'}
     fig, ax = plt.subplots()
     figure2, = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
@@ -397,7 +396,7 @@ def doot(exp, peak, run, end):
     plt.show()
 
 
-def multidoot():
+def multi_plot_outputter():
     fig, axes = plt.subplots(nrows=2, ncols=2)
 
 
@@ -477,28 +476,9 @@ def calib():
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
 
-# calib()
-
-
-# for i in range(1, 5):
-#     doot('SAT', i, 5, 'RDAT')
-
 for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
     for i in range(1, 5):
-        doot('SAT', i, 6, j)
-    # DataRead(i, 3).multiplot()
-# doot('SAT', 1, 6, 'R0')
+        plot_outputter('SAT', i, 6, j)
 
-# doot('FAB', 2, 1)
-# DataConvert('Data', 'ReadableData')
-# for key in Data:
-#     fig, ax = plt.subplots()
-#     figure2, = ax.plot(Data[key][IndependentVariable], Data[key][DependentVariable], '.')
-#     thing = RangeTool(ax, Data, key, figure2)
-#     fig.set_size_inches(16.5, 10.5)
-#     figManager = plt.get_current_fig_manager()
-#     figManager.window.showMaximized()
-#     print('----{}----'.format(time.time() - start_time))
-#     plt.show()
 
 print('Complete')
