@@ -1,14 +1,15 @@
-import numpy as np
-import os
+import datetime
 import math
+import os
+import time
+
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from lmfit.models import PseudoVoigtModel, VoigtModel, LorentzianModel, LinearModel
-from scipy.optimize import curve_fit
-import time
-import datetime
 import uncertainties
+from lmfit.models import PseudoVoigtModel, LinearModel
+from scipy.optimize import curve_fit
 
 matplotlib.use('Agg')
 today = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -37,7 +38,6 @@ class RangeTool(object):
         self.x = data[self.IndependentVariable]
         self.y = data[self.DependentVariable]
         self.ax.set_xlim(np.min(self.x), np.max(self.x))
-        width = np.max(self.x) - np.min(self.x)
         height = np.max(self.y) - np.min(self.y)
         self.ax.set_ylim(np.min(self.y)-0.1*height, np.max(self.y)+0.1*height)
         # text location in axes coords
@@ -68,10 +68,10 @@ class RangeTool(object):
         # update the line positions
         self.lx.set_ydata(y)
         self.ly.set_xdata(x)
-        #print('{},{}'.format(event.xdata, event.ydata))
+        # print('{},{}'.format(event.xdata, event.ydata))
         self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
         self.figure2.figure.canvas.draw_idle()
-        #print('x=%1.2f, y=%1.2f' % (x, y))
+        # print('x=%1.2f, y=%1.2f' % (x, y))
 
     def rangeselect(self, event):
         if not event.inaxes:
@@ -91,8 +91,9 @@ class RangeTool(object):
         if self.il == self.iu:
             try:
                 if math.isnan(self.Ranges.at[self.il-1, 'Displayed']):
-                    self.ax.axvspan(self.Ranges.at[self.il-1, 'Lower Bound'], self.Ranges.at[self.iu-1, 'Upper Bound'], alpha=0.1, edgecolor='k',
-                                                   linestyle='--')
+                    self.ax.axvspan(self.Ranges.at[self.il - 1, 'Lower Bound'],
+                                    self.Ranges.at[self.iu - 1, 'Upper Bound'],
+                                    alpha=0.1, edgecolor='k', linestyle='--')
                     self.Ranges.at[self.il-1, 'Displayed'] = 1
             except ValueError:
                 pass
@@ -135,13 +136,13 @@ class RangeTool(object):
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
         if event.key == 'escape':
             plt.close()
-        #print('\n')
-        #print('Ranges are \n {}'.format(self.Ranges))
-
-
+        # print('\n')
+        # print('Ranges are \n {}'.format(self.Ranges))
 
 
 Data = {}
+
+
 class DataRead:
     def __init__(self, exp, peak, run, end):
         self.IndependentVariable = "Frequency (a.u)"
@@ -215,7 +216,7 @@ class DataRead:
         for i in range(0, len(self.xrange)):
             A.append(self.xranges[i][np.where(self.yranges[i] == np.min(self.yranges[i]))[0]][0])
             B.append(A[i]-A[i-1])
-            C = np.mean(B[1:])
+            # C = np.mean(B[1:])
             # print('A', A, 'A')
             # print('B', B, 'B')
             # print('C', C, 'C')
@@ -226,12 +227,12 @@ class DataRead:
             params += voigt_mod.guess(self.yranges[i], x=self.xranges[i], center=np.median(self.xranges[i]),
                                       sigma=np.std(self.xranges[i]), height=np.max(self.yranges[i]), fraction=0.7)
             model = voigt_mod + line_mod
-            #params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
+            # params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
             labels = dictdict[self.peak]
             plt.plot(self.xranges[i], result.best_fit, antialiased=True, label='\n' + labels[i] + '\n${0:.2f} MHz$'.format(result.params['center'].value))
-            #dely = result.eval_uncertainty(sigma=1)
-            #plt.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
+            # dely = result.eval_uncertainty(sigma=1)
+            # plt.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
             plt.legend(fancybox=True, mode='expand', handlelength=0.01)
             centers = uncertainties.ufloat(result.params['center'].value, result.params['center'].stderr)
             fwhms = uncertainties.ufloat(result.params['fwhm'].value, result.params['fwhm'].stderr)
@@ -242,7 +243,7 @@ class DataRead:
                                       'Relative frequency (MHz)': centers,
                                       'FWHM (MHz)': fwhms,
                                       'Fraction': fractions}, ignore_index=True)
-            #self.texwriter()
+            # self.texwriter()
             print(labels[i])
             print(result.fit_report())
             print('----{}----'.format(time.time() - start_time))
@@ -299,12 +300,12 @@ class DataRead:
             params += voigt_mod.guess(self.yranges[i], x=self.xranges[i], center=np.median(self.xranges[i]),
                                       sigma=np.std(self.xranges[i]), height=np.max(self.yranges[i]), fraction=0.7)
             model = voigt_mod + line_mod
-            #params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
+            # params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
 
             fig = plt.figure()
             fig.subplots_adjust(hspace=0.3, wspace=0)
-            ax1 = fig.add_subplot(2,2,1)
+            ax1 = fig.add_subplot(2, 2, 1)
             ax1.plot(self.xranges[i], result.best_fit, antialiased=True)
             ax1.plot(self.xranges[i], self.yranges[i], '.', color='#1c1c1c')
             dely = result.eval_uncertainty(sigma=1)
@@ -312,33 +313,33 @@ class DataRead:
             ax1.grid(color='k', linestyle='--', alpha=0.2)
             plt.title('Peak with 1 sigma error bands')
 
-            ax2 = fig.add_subplot(2,2,2)
+            ax2 = fig.add_subplot(2, 2, 2)
             ax2.plot(self.xranges[i], self.yranges[i]-result.best_fit, '.', antialiased=True)
             ax2.grid(color='k', linestyle='--', alpha=0.2)
             plt.title('Residuals')
 
-            ax3 = fig.add_subplot(2,2,3)
+            ax3 = fig.add_subplot(2, 2, 3)
             ax3.plot(self.xranges[i], ((self.yranges[i]-result.best_fit)**2)/(dely**2), '.', antialiased=True)
             ax3.grid(color='k', linestyle='--', alpha=0.2)
             plt.title('Normalised residuals')
 
-            ax4 = fig.add_subplot(2,2,4)
+            ax4 = fig.add_subplot(2, 2, 4)
             ax4.hist(self.yranges[i]-result.best_fit, bins=15)
             ax4.grid(color='k', linestyle='--', alpha=0.2)
             plt.title('Residual histogram')
 
-
             fig.tight_layout()
             fig.set_size_inches(16.5, 10.5)
-            figManager = plt.get_current_fig_manager()
-            figManager.window.showMaximized()
-            fig.suptitle(('Peak {0:.0f}'.format(self.peak)+' '+
-                          'Run {0:.0f}'.format(self.run)+' '+
+            fig_manager = plt.get_current_fig_manager()
+            fig_manager.window.showMaximized()
+            fig.suptitle(('Peak {0:.0f}'.format(self.peak) + ' ' +
+                          'Run {0:.0f}'.format(self.run) + ' ' +
                           'Hyperfine peak at {0:.5f}'.format(result.params['center'].value)))
             print(self.peak, self.run, result.params['center'].value)
             print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run, result.params['center'].value))
             plt.show()
             print(result.fit_report())
+
 
 def DataConvert(datafolder, destinationfolder):
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
@@ -366,14 +367,17 @@ def DataConvert(datafolder, destinationfolder):
             dframename2.to_csv('{}.csv'.format(nam3), header=False, index=False)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
 
-#print(DataRead(1, 1).dataset)
+
+# print(DataRead(1, 1).dataset)
+
+
 def doot(exp, peak, run, end):
     peakdict = {1: '87b', 2: '85b', 3: '85a', 4: '87a'}
     fig, ax = plt.subplots()
     figure2, = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
                        DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
                        '.', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
-    #thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
+    # thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
     plt.xlabel('Frequency (a.u)')
     plt.title('{} {}'.format(peakdict[peak], end))
@@ -387,13 +391,15 @@ def doot(exp, peak, run, end):
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
-    #plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
+    # plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
 
     plt.show()
 
+
 def multidoot():
     fig, axes = plt.subplots(nrows=2, ncols=2)
+
 
 def calib():
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
@@ -428,7 +434,7 @@ def calib():
         for t in np.linspace(0, 2*np.pi, 100):
             xs.append(x[k] + xerr[k] * np.cos(t))
             ys.append(y[k] + yerr[k] * np.sin(t))
-        #print(xs)
+        # print(xs)
         el_x[k] = xs
         el_y[k] = ys
 
@@ -449,9 +455,9 @@ def calib():
     plt.xlabel('Accepted Separations (MHz)')
     fig = plt.gcf()
     fig.set_size_inches(13.5, 10.5)
-    figManager = plt.get_current_fig_manager()
-    figManager.window.showMaximized()
-    #plt.savefig('LSPEC1_CALIB_1.png', dpi=600)
+    fig_manager = plt.get_current_fig_manager()
+    fig_manager.window.showMaximized()
+    # plt.savefig('LSPEC1_CALIB_1.png', dpi=600)
     plt.show()
 
     plt.plot(x, y-g2(x, *popt), 'x')
@@ -461,16 +467,17 @@ def calib():
     plt.ylabel('Residuals (MHz)')
     fig = plt.gcf()
     fig.set_size_inches(13.5, 10.5)
-    figManager = plt.get_current_fig_manager()
-    figManager.window.showMaximized()
-    #plt.savefig('LSPEC1_CALIB_RESID_1.png', dpi=600)
+    fig_manager = plt.get_current_fig_manager()
+    fig_manager.window.showMaximized()
+    # plt.savefig('LSPEC1_CALIB_RESID_1.png', dpi=600)
     plt.show()
 
     plt.hist(y-g2(x, *popt),  bins='auto')
     plt.show()
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
-#calib()
+
+# calib()
 
 
 # for i in range(1, 5):
@@ -479,11 +486,11 @@ def calib():
 for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
     for i in range(1, 5):
         doot('SAT', i, 6, j)
-    #DataRead(i, 3).multiplot()
+    # DataRead(i, 3).multiplot()
 # doot('SAT', 1, 6, 'R0')
 
-#doot('FAB', 2, 1)
-#DataConvert('Data', 'ReadableData')
+# doot('FAB', 2, 1)
+# DataConvert('Data', 'ReadableData')
 # for key in Data:
 #     fig, ax = plt.subplots()
 #     figure2, = ax.plot(Data[key][IndependentVariable], Data[key][DependentVariable], '.')
