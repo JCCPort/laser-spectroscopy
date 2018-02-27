@@ -3,7 +3,6 @@ import math
 import os
 import time
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -11,11 +10,12 @@ import uncertainties
 from lmfit.models import PseudoVoigtModel, LinearModel
 from scipy.optimize import curve_fit
 
-matplotlib.use('Agg')
 today = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 print(today)
 
 os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
+
+antialiased = True
 
 
 class RangeTool(object):
@@ -142,7 +142,6 @@ class RangeTool(object):
 
 Data = {}
 
-
 class DataRead:
     def __init__(self, exp, peak, run, end):
         self.IndependentVariable = "Frequency (a.u)"
@@ -158,7 +157,6 @@ class DataRead:
         self.yranges = {}
         self.datpath = 'ReadableData'
         self.rangepath = 'Ranges'
-        self.rangename = pd.read_csv('{}.csv'.format(self.datafilename))
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.datpath))
         self.datafilename = '{}_{}_{}_{}'.format(self.exp, self.peak, self.run, self.end)
         self.dataset = self.datafilename.split('.')[0]
@@ -166,9 +164,7 @@ class DataRead:
                                    header=None, delimiter=',',
                                    names=[self.IndependentVariable, self.DependentVariable],
                                    float_precision='round_trip', engine='c')
-        print(self.dataset)
         self.dataset['Frequency (a.u)'] = self.dataset['Frequency (a.u)'].apply(lambda x: (x*((380/0.002610666056666669))))
-        print(self.dataset)
 
     def range(self):
         for i in range(0, len(self.rangename)):
@@ -180,9 +176,8 @@ class DataRead:
         return self.xranges, self.yranges, self.xrange, self.yrange
 
     def singleplot(self):
-        start_time = time.time()
-
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.rangepath))
+        self.rangename = pd.read_csv('{}.csv'.format(self.datafilename))
         self.range()
         A = []
         B = []
@@ -234,7 +229,8 @@ class DataRead:
             # params['gamma'].set(value=np.std(self.xranges[i]), vary=True)
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
             labels = dictdict[self.peak]
-            plt.plot(self.xranges[i], result.best_fit, antialiased=True, label='\n' + labels[i] + '\n${0:.2f} MHz$'.format(result.params['center'].value))
+            plt.plot(self.xranges[i], result.best_fit, antialiased=True,
+                     label='\n' + labels[i] + '\n${0:.2f} MHz$'.format(result.params['center'].value))
             # dely = result.eval_uncertainty(sigma=1)
             # plt.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
             plt.legend(fancybox=True, mode='expand', handlelength=0.01)
@@ -248,9 +244,8 @@ class DataRead:
                                       'FWHM (MHz)': fwhms,
                                       'Fraction': fractions}, ignore_index=True)
             # self.texwriter()
-            print(labels[i])
-            print(result.fit_report())
-            print('----{}----'.format(time.time() - start_time))
+            # print(labels[i])
+            # print(result.fit_report())
         # fitvals.to_csv('fit_{}_{}.csv'.format(self.peak, self.run))
 
     def texwriter(self):
@@ -292,7 +287,7 @@ class DataRead:
             texfile.write('\\end{document}\n')
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
 
-    def multi_plot(self):
+    def multiplot(self):
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.rangepath))
         self.rangename = pd.read_csv('{}.csv'.format(self.datafilename), engine='c')
         self.range()
@@ -337,16 +332,16 @@ class DataRead:
             fig.suptitle(('Peak {0:.0f}'.format(self.peak) + ' ' +
                           'Run {0:.0f}'.format(self.run) + ' ' +
                           'Hyperfine peak at {0:.5f}'.format(result.params['center'].value)))
-            print(self.peak, self.run, result.params['center'].value)
-            print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run, result.params['center'].value))
+            # print(self.peak, self.run, result.params['center'].value)
+            # print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run, result.params['center'].value))
             plt.show()
-            print(result.fit_report())
+            # print(result.fit_report())
 
 
 def DataConvert(datafolder, destinationfolder):
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
     for filename in os.listdir(os.getcwd()):
-        print(filename)
+        # print(filename)
         name = filename.split('.')[0]
         nam2 = name.split('_')
         nam3 = nam2[0] + '_' + nam2[1] + '_' + nam2[2] + '_' + ('R'+nam2[3])
@@ -364,18 +359,19 @@ def DataConvert(datafolder, destinationfolder):
                 dframename2 = pd.read_excel(filename, usecols='J:K', engine='c')
             except ValueError:
                 dframename2 = pd.read_excel(filename, usecols='D:E', engine='c')
-            print(dframename2)
+            # print(dframename2)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(destinationfolder))
             dframename2.to_csv('{}.csv'.format(nam3), header=False, index=False)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
 
 
-def plot_outputter(exp, peak, run, end):
+def doot(exp, peak, run, end):
+    start_time = time.time()
     peakdict = {1: '87b', 2: '85b', 3: '85a', 4: '87a'}
     fig, ax = plt.subplots()
-    figure2, = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
-                       DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
-                       '.', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
+    figure2 = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
+                      DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
+                      'o', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
     # thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
     plt.xlabel('Frequency (a.u)')
@@ -392,11 +388,11 @@ def plot_outputter(exp, peak, run, end):
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
     # plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
-
+    print(time.time() - start_time)
     plt.show()
 
 
-def multi_plot_outputter():
+def multidoot():
     fig, axes = plt.subplots(nrows=2, ncols=2)
 
 
@@ -421,7 +417,7 @@ def calib():
     expsepframe = pd.DataFrame({'Transitions': separations,
                              'Separations (MHz)': expsepvals,
                              'Uncertainties (MHz)': expsepuncert
-                             })
+                                })
 
     x, y = sepframe['Separations (MHz)'], expsepframe['Separations (MHz)']
     xerr, yerr = expsepframe['Uncertainties (MHz)'], sepframe['Uncertainties (MHz)']
@@ -443,8 +439,8 @@ def calib():
                            sigma=yerr, absolute_sigma=True)
     popt2, pcov2 = curve_fit(g2, x, y-g2(x, *popt))
 
-    print(popt, pcov)
-    print(popt2)
+    # print(popt, pcov)
+    # print(popt2)
     plt.plot(np.linspace(0, 450, 500), g2(np.linspace(0, 450, 500), *popt))
     plt.plot(x, y, 'x')
     for i in range(0, len(el_x)):
@@ -476,9 +472,8 @@ def calib():
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
 
-for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
-    for i in range(1, 5):
-        plot_outputter('SAT', i, 6, j)
+for i in range(1, 5):
+    doot('ZEE', i, 1, 'RDAT')
 
 
 print('Complete')
