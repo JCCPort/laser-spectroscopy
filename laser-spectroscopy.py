@@ -15,20 +15,18 @@ print(today)
 
 os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
-antialiased = True
 
-
-class RangeTool(object):
+class RangeTool:
     """
     Like Cursor but the crosshair snaps to the nearest x,y point
     For simplicity, I'm assuming x is sorted
     """
 
     def __init__(self, ax, data, key, figure2):
-        self.ax = figure2.axes
         self.data = data
         self.key = key
         self.figure2 = figure2
+        self.ax = figure2.axes
         self.lx = ax.axhline(color='k')  # the horiz line
         self.ly = ax.axvline(color='k')  # the vert line
         self.lowers = np.array([])
@@ -47,14 +45,15 @@ class RangeTool(object):
         self.cid3 = figure2.figure.canvas.mpl_connect('key_press_event', self.rangeremove)
         self.cid4 = figure2.figure.canvas.mpl_connect('key_press_event', self.finishplot)
         self.Ranges = pd.DataFrame(columns=['Lower Bound', 'LowerIndex', 'Upper Bound', 'UpperIndex', 'Displayed'])
-        self.il = 0
-        self.iu = 0
-        self.t = 0
+        self.il = 0.
+        self.iu = 0.
+        self.t = 0.
 
     def __call__(self, event):
         print('click', event)
         print(event.xdata, event.ydata)
-        if event.inaxes != self.figure2.axes: return
+        if event.inaxes != self.figure2.axes:
+            return
 
     def mouse_move(self, event):
 
@@ -77,7 +76,6 @@ class RangeTool(object):
         if not event.inaxes:
             return
         x = event.xdata
-        print(x)
         indx = min(np.searchsorted(self.x, [x])[0], len(self.x) - 1)
         x = self.x[indx]
         if event.key == 'tab':
@@ -89,14 +87,13 @@ class RangeTool(object):
             self.Ranges.at[self.iu, 'UpperIndex'] = indx
             self.iu += 1
         if self.il == self.iu:
-            try:
-                if math.isnan(self.Ranges.at[self.il-1, 'Displayed']):
-                    self.ax.axvspan(self.Ranges.at[self.il - 1, 'Lower Bound'],
-                                    self.Ranges.at[self.iu - 1, 'Upper Bound'],
+            if self.il * self.iu > 0:
+                if math.isnan(self.Ranges.at[self.il - 1.0, 'Displayed']):
+                    self.ax.axvspan(self.Ranges.at[self.il - 1.0, 'Lower Bound'],
+                                    self.Ranges.at[self.iu - 1.0, 'Upper Bound'],
                                     alpha=0.1, edgecolor='k', linestyle='--')
                     self.Ranges.at[self.il-1, 'Displayed'] = 1
-            except ValueError:
-                pass
+
         self.cid3 = self.figure2.figure.canvas.mpl_connect('key_press_event', self.rangeremove)
 
     def rangeremove(self, event):
@@ -110,19 +107,19 @@ class RangeTool(object):
                     self.il -= 1
                     self.iu -= 1
                     self.Ranges.drop(self.Ranges.index[-1], inplace=True)
-                    Polys = self.ax.get_children()
-                    Polys[len(self.Ranges.index)].remove()
+                    polys = self.ax.get_children()
+                    polys[len(self.Ranges.index)].remove()
                 except IndexError:
                     self.Ranges.at[self.il - 1, 'Displayed'] = float('NaN')
                     self.il -= 1
                     self.iu -= 1
                     self.Ranges.drop(self.Ranges.index[0], inplace=True)
-                    Polys = self.ax.get_children()
-                    Polys[0].remove()
+                    polys = self.ax.get_children()
+                    polys[0].remove()
                     if self.Ranges == 'Empty DataFrame':
                         print('Range list is empty')
                 # except NotImplementedError:
-                #     Polys[len(self.Ranges.index)] = Polys(alpha=0)[len(self.Ranges.index)]
+                #     polys[len(self.Ranges.index)] = polys(alpha=0)[len(self.Ranges.index)]
                 finally:
                     pass
                 self.cid1 = self.figure2.figure.canvas.mpl_connect('key_press_event', self.rangeselect)
@@ -141,6 +138,7 @@ class RangeTool(object):
 
 
 Data = {}
+
 
 class DataRead:
     def __init__(self, exp, peak, run, end):
@@ -164,17 +162,23 @@ class DataRead:
                                    header=None, delimiter=',',
                                    names=[self.IndependentVariable, self.DependentVariable],
                                    float_precision='round_trip', engine='c')
+        self.dataset['Frequency (a.u)'] = self.dataset['Frequency (a.u)'] \
+            .apply(lambda x: (x * (380 / 0.002610666056666669)))
 
     def range(self):
-        for i in range(0, len(self.rangename)):
-            self.xrange.append((self.dataset[self.IndependentVariable][self.rangename['LowerIndex'][i]:self.rangename['UpperIndex'][i]+1]).values)
-            self.yrange.append((self.dataset[self.DependentVariable][self.rangename['LowerIndex'][i]:self.rangename['UpperIndex'][i]+1]).values)
-        for i in range(0, len(self.xrange)):
-            self.xranges[i] = self.xrange[i]
-            self.yranges[i] = self.yrange[i]
+        for o in range(0, len(self.rangename)):
+            self.xrange.append((self.dataset[self.IndependentVariable][self.rangename['LowerIndex'][o]:
+                                                                       self.rangename['UpperIndex'][o] + 1]).values)
+            self.yrange.append((self.dataset[self.DependentVariable][self.rangename['LowerIndex'][o]:
+                                                                     self.rangename['UpperIndex'][o] + 1]).values)
+        for o in range(0, len(self.xrange)):
+            self.xranges[o] = self.xrange[o]
+            self.yranges[o] = self.yrange[o]
         return self.xranges, self.yranges, self.xrange, self.yrange
 
     def singleplot(self):
+        start_time = time.time()
+
         os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(self.rangepath))
         self.rangename = pd.read_csv('{}.csv'.format(self.datafilename))
         self.range()
@@ -229,7 +233,7 @@ class DataRead:
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
             labels = dictdict[self.peak]
             plt.plot(self.xranges[i], result.best_fit, antialiased=True,
-                     label='${0:.2f} MHz$'.format(result.params['center'].value))
+                     label='\n' + labels[i] + '\n${0:.2f} MHz$'.format(result.params['center'].value))
             # dely = result.eval_uncertainty(sigma=1)
             # plt.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
             plt.legend(fancybox=True, mode='expand', handlelength=0.01)
@@ -242,9 +246,10 @@ class DataRead:
                                       'Relative frequency (MHz)': centers,
                                       'FWHM (MHz)': fwhms,
                                       'Fraction': fractions}, ignore_index=True)
-            self.texwriter()
+            # self.texwriter()
             # print(labels[i])
             # print(result.fit_report())
+            # print('----{}----'.format(time.time() - start_time))
         # fitvals.to_csv('fit_{}_{}.csv'.format(self.peak, self.run))
 
     def texwriter(self):
@@ -331,42 +336,48 @@ class DataRead:
             fig.suptitle(('Peak {0:.0f}'.format(self.peak) + ' ' +
                           'Run {0:.0f}'.format(self.run) + ' ' +
                           'Hyperfine peak at {0:.5f}'.format(result.params['center'].value)))
-            # print(self.peak, self.run, result.params['center'].value)
-            # print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run, result.params['center'].value))
+            print(self.peak, self.run, result.params['center'].value)
+            print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run,
+                                                                               result.params['center'].value))
             plt.show()
-            # print(result.fit_report())
+            print(result.fit_report())
 
 
 def DataConvert(datafolder, destinationfolder):
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
     for filename in os.listdir(os.getcwd()):
-        # print(filename)
+        print(filename)
         name = filename.split('.')[0]
         nam2 = name.split('_')
         nam3 = nam2[0] + '_' + nam2[1] + '_' + nam2[2] + '_' + ('R'+nam2[3])
         if filename.split('.')[1] == 'csv':
             try:
-                dframename = pd.read_csv(filename, header=None,
-                                         delimiter=',', usecols=[9, 10], engine='c')
+                dframename = pd.read_csv(filename, header=None, delimiter=',', usecols=[9, 10], engine='c')
             except ValueError:
-                dframename = pd.read_csv(filename, header=None,
-                                         delimiter=',', usecols=[3, 4], engine='c')
-            print(filename)
-            print(dframename)
-            dframename.iloc[:, 0] = dframename.iloc[:, 0].apply(lambda x: (x * (380.0 / 0.002610666056666669)))
-            print(dframename)
+                dframename = pd.read_csv(filename, header=None, delimiter=',', usecols=[3, 4], engine='c')
+
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(destinationfolder))
             dframename.to_csv('{}.csv'.format(nam3), header=False, index=False)
+            os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
+        elif filename.split('.')[1] == 'xlsx':
+            try:
+                dframename2 = pd.read_excel(filename, usecols='J:K', engine='c')
+            except ValueError:
+                dframename2 = pd.read_excel(filename, usecols='D:E', engine='c')
+            print(dframename2)
+            os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(destinationfolder))
+            dframename2.to_csv('{}.csv'.format(nam3), header=False, index=False)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
 
 
 def doot(exp, peak, run, end):
-    start_time = time.time()
+    plt.switch_backend('QT5Agg')
+    # The RangeTool will not work properly with non-QT backends
     peakdict = {1: '87b', 2: '85b', 3: '85a', 4: '87a'}
     fig, ax = plt.subplots()
-    figure2 = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
-                      DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
-                      'o', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
+    figure2, = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
+                       DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
+                       '.', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
     thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
     plt.xlabel('Frequency (a.u)')
@@ -381,9 +392,10 @@ def doot(exp, peak, run, end):
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
-    plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
+    # plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
-    print(time.time() - start_time)
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
     plt.show()
 
 
@@ -434,8 +446,8 @@ def calib():
                            sigma=yerr, absolute_sigma=True)
     popt2, pcov2 = curve_fit(g2, x, y-g2(x, *popt))
 
-    # print(popt, pcov)
-    # print(popt2)
+    print(popt, pcov)
+    print(popt2)
     plt.plot(np.linspace(0, 450, 500), g2(np.linspace(0, 450, 500), *popt))
     plt.plot(x, y, 'x')
     for i in range(0, len(el_x)):
@@ -467,13 +479,9 @@ def calib():
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
 
-#
-# for i in range(1, 5):
-#     for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
-#         doot('SAT', i, 6, j)
-
-for i in range(1, 5):
-    doot('ZEE', i, 1, 'RDAT')
+for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
+    for i in range(1, 5):
+        doot('SAT', i, 6, j)
 # DataConvert('Data', 'ReadableData')
 
 print('Complete')
