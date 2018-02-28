@@ -164,7 +164,6 @@ class DataRead:
                                    header=None, delimiter=',',
                                    names=[self.IndependentVariable, self.DependentVariable],
                                    float_precision='round_trip', engine='c')
-        self.dataset['Frequency (a.u)'] = self.dataset['Frequency (a.u)'].apply(lambda x: (x*((380/0.002610666056666669))))
 
     def range(self):
         for i in range(0, len(self.rangename)):
@@ -230,7 +229,7 @@ class DataRead:
             result = model.fit(self.yranges[i], params, x=self.xranges[i])
             labels = dictdict[self.peak]
             plt.plot(self.xranges[i], result.best_fit, antialiased=True,
-                     label='\n' + labels[i] + '\n${0:.2f} MHz$'.format(result.params['center'].value))
+                     label='${0:.2f} MHz$'.format(result.params['center'].value))
             # dely = result.eval_uncertainty(sigma=1)
             # plt.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
             plt.legend(fancybox=True, mode='expand', handlelength=0.01)
@@ -243,7 +242,7 @@ class DataRead:
                                       'Relative frequency (MHz)': centers,
                                       'FWHM (MHz)': fwhms,
                                       'Fraction': fractions}, ignore_index=True)
-            # self.texwriter()
+            self.texwriter()
             # print(labels[i])
             # print(result.fit_report())
         # fitvals.to_csv('fit_{}_{}.csv'.format(self.peak, self.run))
@@ -347,21 +346,17 @@ def DataConvert(datafolder, destinationfolder):
         nam3 = nam2[0] + '_' + nam2[1] + '_' + nam2[2] + '_' + ('R'+nam2[3])
         if filename.split('.')[1] == 'csv':
             try:
-                dframename = pd.read_csv(filename, header=None, delimiter=',', usecols=[9, 10], engine='c')
+                dframename = pd.read_csv(filename, header=None,
+                                         delimiter=',', usecols=[9, 10], engine='c')
             except ValueError:
-                dframename = pd.read_csv(filename, header=None, delimiter=',', usecols=[3, 4], engine='c')
-
+                dframename = pd.read_csv(filename, header=None,
+                                         delimiter=',', usecols=[3, 4], engine='c')
+            print(filename)
+            print(dframename)
+            dframename.iloc[:, 0] = dframename.iloc[:, 0].apply(lambda x: (x * (380.0 / 0.002610666056666669)))
+            print(dframename)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(destinationfolder))
             dframename.to_csv('{}.csv'.format(nam3), header=False, index=False)
-            os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
-        elif filename.split('.')[1] == 'xlsx':
-            try:
-                dframename2 = pd.read_excel(filename, usecols='J:K', engine='c')
-            except ValueError:
-                dframename2 = pd.read_excel(filename, usecols='D:E', engine='c')
-            # print(dframename2)
-            os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(destinationfolder))
-            dframename2.to_csv('{}.csv'.format(nam3), header=False, index=False)
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\{}'.format(datafolder))
 
 
@@ -372,7 +367,7 @@ def doot(exp, peak, run, end):
     figure2 = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
                       DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
                       'o', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5)
-    # thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
+    thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
     plt.xlabel('Frequency (a.u)')
     plt.title('{} {}'.format(peakdict[peak], end))
@@ -386,7 +381,7 @@ def doot(exp, peak, run, end):
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
-    # plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
+    plt.savefig('{}_{}_{}_{}.png'.format(exp, peak, run, end), dpi=600)
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
     print(time.time() - start_time)
     plt.show()
@@ -472,8 +467,13 @@ def calib():
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
 
+#
+# for i in range(1, 5):
+#     for j in {'R0', 'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
+#         doot('SAT', i, 6, j)
+
 for i in range(1, 5):
     doot('ZEE', i, 1, 'RDAT')
-
+# DataConvert('Data', 'ReadableData')
 
 print('Complete')
