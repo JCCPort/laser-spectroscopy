@@ -397,64 +397,68 @@ class DataRead:
             plt.rcParams['ps.usedistiller'] = 'xpdf'
             plt.rcParams['ps.distiller.res'] = '16000'
 
-            size = 12
+            size = 13
             size2 = 16
-            fig = plt.figure()
-            fig.subplots_adjust(hspace=0.3, wspace=0)
+            fig = plt.figure(figsize=(16.5, 10.5))
+            fig.subplots_adjust(top=0.898,
+                                bottom=0.082,
+                                left=0.043,
+                                right=0.989,
+                                hspace=0.381,
+                                wspace=0.207)
             ax1 = fig.add_subplot(2, 2, 1)
             ax1.plot(self.xranges[i], result.best_fit, antialiased=True)
-            ax1.plot(self.xranges[i], self.yranges[i], '.', color='#1c1c1c')
+            ax1.plot(self.xranges[i], self.yranges[i], 'o', markerfacecolor="None", color='#1c1c1c', markersize=3.5,
+                     mew=0.6)
             dely = result.eval_uncertainty(sigma=1)
-            ax1.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB")
-            ax1.grid(color='k', linestyle='--', alpha=0.2, antialiased=True)
+            ax1.fill_between(self.xranges[i], result.best_fit - dely, result.best_fit + dely, color="#ABABAB",
+                             antialiased=True, alpha=0.2)
+            ax1.grid(color='k', linestyle='--', alpha=0.4, antialiased=True)
             plt.title(r'$\textit{Peak with 1 sigma error bands}$', fontsize=size2)
             plt.xlabel(r'$\textit{Frequency} \textit{ (MHz+C)}$', fontsize=size)
-            plt.ylabel(r'$\textit{Intensity (V)}$', fontsize=size)
+            plt.ylabel(r'$\textit{Intensity (a.u)}$', fontsize=size)
 
             ax2 = fig.add_subplot(2, 2, 2)
-            ax2.plot(self.xranges[i], self.yranges[i] - result.best_fit, '.', antialiased=True, color='#1c1c1c')
-            ax2.grid(color='k', linestyle='--', alpha=0.2)
+            ax2.plot(self.xranges[i], self.yranges[i] - result.best_fit, 'o',
+                     markerfacecolor="None", antialiased=True, color='#1c1c1c', markersize=3.5, mew=0.6)
+            ax2.grid(color='k', linestyle='--', alpha=0.2, antialiased=True)
             plt.title(r'$Residuals$', fontsize=size2)
             plt.ylabel(r'$f_m - f_f \textit{ (MHz+C)}$', fontsize=size)
             plt.xlabel(r'$\textit{Frequency} \textit{ (MHz+C)}$', fontsize=size)
 
             ax3 = fig.add_subplot(2, 2, 3)
-            ax3.plot(self.xranges[i], ((self.yranges[i] - result.best_fit) ** 2) / (dely ** 2), '.', antialiased=True,
-                     color='#1c1c1c')
-            ax3.grid(color='k', linestyle='--', alpha=0.2)
+            ax3.plot(self.xranges[i], ((self.yranges[i] - result.best_fit) ** 2) / (dely ** 2), 'o',
+                     markerfacecolor="None", antialiased=True,
+                     color='#1c1c1c', markersize=3.5, mew=0.6)
+            ax3.grid(color='k', linestyle='--', alpha=0.2, antialiased=True)
             plt.title(r'$\textit{Normalised residuals}$', fontsize=size2)
             plt.xlabel(r'$\textit{Frequency} \textit{ (MHz+C)}$', fontsize=size)
             plt.ylabel(r'$(f_m - f_f)^2 \div \sigma^2$', fontsize=size)
 
             ax4 = fig.add_subplot(2, 2, 4)
-            ax4.hist(self.yranges[i] - result.best_fit, bins=30, antialiased=True, color='#1c1c1c')
-            ax4.grid(color='k', linestyle='--', alpha=0.2)
+            ax4.hist(self.yranges[i] - result.best_fit, bins=30, antialiased=True, color="b", alpha=0.5, rwidth=0.8,
+                     edgecolor='#1c1c1c')
+            ax4.grid(color='k', linestyle='--', alpha=0.2, antialiased=True)
             plt.xlabel(r'$f_m - f_f \textit{ (MHz+C)}$', fontsize=size)
             plt.ylabel(r'$\textit{Counts}$', fontsize=size)
             plt.title(r'$\textit{Residual histogram}$', fontsize=size2)
 
-
-            fig.tight_layout()
-            fig.set_size_inches(16.5, 10.5)
+            # fig.tight_layout()
             fig_manager = plt.get_current_fig_manager()
             fig_manager.window.showMaximized()
-            fig.suptitle(('{} {}'.format(dictdict2[self.peak], labels[i]) + ' ' +
-                          'at {0:.4f} MHz'.format(result.params['center'].value)), fontsize=18)
-            plt.subplots_adjust(top=0.884,
-                                bottom=0.084,
-                                left=0.077,
-                                right=0.956,
-                                hspace=0.555,
-                                wspace=0.247)
+            print('{t}'.format(t=int(self.end[1:])))
+            ang = int(self.end[1:])
+            fig.suptitle((r'{} {}, $\theta:\ang{{{}}}$ '.format(dictdict2[self.peak], labels[i], ang)), fontsize=18)
+
             print(self.peak, self.run, result.params['center'].value)
             print('Peak {0:2d}, Run {0:.0f}, Hyperfine peak at {0:.5f}'.format(self.peak, self.run,
                                                                                result.params['center'].value))
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
             plt.savefig(
                 '{}_{}_{}_{}_{}resid.png'.format(self.exp, self.peak, self.run, self.end, dictdict3[self.peak][i]),
-                dpi=600)
+                dpi=600, bbox_inches='tight')
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Ranges')
-            # plt.show()
+            plt.show()
             print(result.fit_report())
 
 
@@ -495,7 +499,7 @@ def doot(exp, peak, run, end):
     figure2, = ax.plot(DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).IndependentVariable],
                        DataRead(exp, peak, run, end).dataset[DataRead(exp, peak, run, end).DependentVariable],
                        '.', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5, picker=5)
-    # thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
+    thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
     plt.xlabel('Frequency (a.u)')
     # plt.title('{} {}'.format(peakdict[peak], end))
@@ -515,7 +519,7 @@ def doot(exp, peak, run, end):
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
     # print(plt.gcf().get_children())
-    # plt.show()
+    plt.show()
 
 
 # multidoot is currently useless and may be removed
@@ -573,8 +577,8 @@ def calib():
     for i in range(0, len(el_x)):
         plt.plot(el_x[i], el_y[i], '.', color='k', mew=0.5, markersize=0.3, antialiased=True)
     plt.grid(color='k', linestyle='--', alpha=0.2)
-    plt.ylabel('Experimental Separations (MHz)')
-    plt.xlabel('Accepted Separations (MHz)')
+    plt.ylabel('Experimental Separations (MHz+C)')
+    plt.xlabel('Accepted Separations (MHz+C)')
     fig = plt.gcf()
     fig.set_size_inches(13.5, 10.5)
     fig_manager = plt.get_current_fig_manager()
@@ -582,11 +586,11 @@ def calib():
     # plt.savefig('LSPEC1_CALIB_1.png', dpi=600)
     plt.show()
 
-    plt.plot(x, y-g2(x, *popt), 'x')
-    plt.plot(x, g2(x, *popt2))
+    plt.plot(x, y - g2(x, *popt), 'x', antialiased=True)
+    plt.plot(x, g2(x, *popt2), antialiased=True)
     plt.grid(color='k', linestyle='--', alpha=0.2)
-    plt.xlabel('Experimental Separations (MHz)')
-    plt.ylabel('Residuals (MHz)')
+    plt.xlabel('Experimental Separations (MHz+C)')
+    plt.ylabel('Residuals (MHz+C)')
     fig = plt.gcf()
     fig.set_size_inches(13.5, 10.5)
     fig_manager = plt.get_current_fig_manager()
@@ -594,7 +598,7 @@ def calib():
     # plt.savefig('LSPEC1_CALIB_RESID_1.png', dpi=600)
     plt.show()
 
-    plt.hist(y-g2(x, *popt),  bins='auto')
+    # plt.hist(y-g2(x, *popt),  bins='auto')
     plt.show()
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\ReadableData')
 
@@ -602,6 +606,7 @@ def calib():
 for j2 in {'R5', 'R10', 'R15', 'R25', 'R35', 'R45'}:
     for i2 in range(1, 5):
         doot('SAT', i2, 6, j2)
+# calib()
 # DataConvert('Data', 'ReadableData')
-# doot('ZEE', 5, 1, 'RDAT')
+# doot('DOP', 1, 1, 'RDAT')
 print('Complete')
