@@ -108,6 +108,10 @@ class RangeTool:
 
         self.cid3 = self.figure2.figure.canvas.mpl_connect('key_press_event', self.rangeremove)
 
+    def onpick(self, event):
+        this_artist = event.artist
+        plt.gca().picked_object = this_artist
+
     def rangeremove(self, event):
         if not event.inaxes:
             return
@@ -179,7 +183,7 @@ class DataRead:
                                    names=[self.IndependentVariable, self.DependentVariable],
                                    float_precision='round_trip', engine='c')
         self.dataset['Frequency (a.u)'] = self.dataset['Frequency (a.u)'] \
-            .apply(lambda x: (x * (380 / 0.002610666056666669)))
+            .apply(lambda x: (x * 1))
 
     def range(self):
         for o in range(0, len(self.rangename)):
@@ -203,12 +207,11 @@ class DataRead:
         B = []
 
         a_87 = {0: "$F=2 \Rightarrow F'=3$",
-                1: "Unknown trough",
-                2: "Crossover: $F'=2, F'=3$",
-                3: "Crossover: $F'=1, F'=3$",
-                4: "$F=2 \Rightarrow F'=2$",
-                5: "Crossover: $F'=2, F'=1$",
-                6: "$F=2 \Rightarrow F'=1$"}
+                1: "Crossover: $F'=2, F'=3$",
+                2: "Crossover: $F'=1, F'=3$",
+                3: "$F=2 \Rightarrow F'=2$",
+                4: "Crossover: $F'=2, F'=1$",
+                5: "$F=2 \Rightarrow F'=1$"}
         a_85 = {0: "$F=3 \Rightarrow F'=4$",
                 1: "Crossover: $F'=3, F'=4$",
                 2: "Crossover: $F'=2, F'=4$",
@@ -247,12 +250,12 @@ class DataRead:
             params.add('center', value=np.median(self.xranges[i]),
                        min=np.min(self.xranges[i]) * 0.9,
                        max=np.max(self.xranges[i]) * 1.1)
-            params.add('fraction', value=0.95, max=1.9)
+            # params.add('fraction', value=0.95, max=1.9)
 
             mate = np.abs(self.yranges[i]) ** (1 / 2)
             model = voigt_mod + line_mod
             result = model.fit(self.yranges[i], params, x=self.xranges[i], weights=mate)
-            labels = dictdict[self.peak]
+            # labels = dictdict[self.peak]
             plt.plot(self.xranges[i], result.best_fit, antialiased=True,
                      label='${0:.2f} MHz+C$'.format(result.params['center'].value))
             # plt.plot(self.xranges[i], result.best_fit,
@@ -265,11 +268,11 @@ class DataRead:
             fractions = uncertainties.ufloat(result.params['fraction'].value, result.params['fraction'].stderr)
             peakdict = {1: '87b', 2: '85b', 3: '85a', 4: '87a'}
             self.fitvals = self.fitvals.append({
-                'Hyperfine transition': labels[i],
+                'Hyperfine transition': i,
                 'Relative frequency (MHz)': centers,
                 'FWHM (MHz)': fwhms,
                 'Fraction': fractions}, ignore_index=True)
-            # self.texwriter()
+            self.texwriter()
             # print(labels[i])
             print(result.fit_report())
             # print('----{}----'.format(time.time() - start_time))
@@ -481,7 +484,7 @@ class DataRead:
                 '{}_{}_{}_{}_{}resid.png'.format(self.exp, self.peak, self.run, self.end, dictdict3[self.peak][i]),
                 dpi=600, bbox_inches='tight')
             os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Ranges')
-            # plt.show()
+            plt.show()
             print(result.fit_report())
 
 
@@ -524,9 +527,10 @@ def doot(exp, peak, run, end):
                        '.', antialiased='True', color='#1c1c1c', mew=1.0, markersize=2.5, picker=5)
     thing = RangeTool(ax, DataRead(exp, peak, run, end).dataset, DataRead(exp, peak, run, end).datafilename, figure2)
     plt.ylabel('Intensity (a.u)')
-    plt.xlabel('Frequency (a.u)')
-    plt.title('{} {}'.format(peakdict[peak], end))
+    plt.xlabel('Frequency (MHz+C)')
+    # plt.title('{} {}'.format(peakdict[peak], end))
     plt.title('{} {} {} {}'.format(exp, peak, run, end))
+    plt.xlim([2000, 1200])
     ax.grid(color='k', linestyle='--', alpha=0.2)
     fig.set_size_inches(13.5, 10.5)
 
@@ -535,9 +539,9 @@ def doot(exp, peak, run, end):
         DataRead(exp, peak, run, end).singleplot()
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend(fancybox=True, loc='center left', bbox_to_anchor=(1, 0.5))
+    # ax.legend(fancybox=True, loc='center left', bbox_to_anchor=(1, 0.5))
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1\Figures')
-    # plt.savefig('{}_{}_{}_{}resid.png'.format(exp, peak, run, end), dpi=600)
+    plt.savefig('{}_{}_{}_{}2.png'.format(exp, peak, run, end), dpi=600)
     os.chdir('C:\\Users\Josh\Desktop\LSPEC1')
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
@@ -630,6 +634,6 @@ def calib():
 # for i2 in range(1, 5):
 #     doot('SAT', i2, 2, 'RDAT')
 # calib()
-# DataConvert('Data', 'ReadableData')
-doot('DOP', 1, 1, 'RDAT')
+# DataConvert('Data', 'Reada¬bleData')
+doot('ZEE', 1, 1, 'RDAT')
 print('Complete')
